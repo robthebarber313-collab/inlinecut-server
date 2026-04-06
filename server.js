@@ -70,9 +70,6 @@ app.post("/send-verification", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`In LineCut SMS server running on port ${PORT}`));
-
 app.post("/send-reset", async (req, res) => {
   const { email, code } = req.body;
   try {
@@ -85,3 +82,6 @@ app.post("/send-reset", async (req, res) => {
     res.json({ success: true });
   } catch(err) { res.status(500).json({ success: false }); }
 });
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(`In LineCut SMS server running on port ${PORT}`));
