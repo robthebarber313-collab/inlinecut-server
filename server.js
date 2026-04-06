@@ -72,3 +72,16 @@ app.post("/send-verification", async (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`In LineCut SMS server running on port ${PORT}`));
+
+app.post("/send-reset", async (req, res) => {
+  const { email, code } = req.body;
+  try {
+    await resend.emails.send({
+      from: "In LineCut <onboarding@resend.dev>",
+      to: email,
+      subject: "Reset Your In LineCut Password",
+      html: "<div style='font-family:sans-serif;max-width:480px;margin:0 auto;padding:40px 24px'><h1 style='font-size:32px;letter-spacing:4px;color:#0a0a0a'>IN LINECUT</h1><h2>Password Reset Code</h2><p>Your reset code is:</p><div style='background:#0a0a0a;color:#fff;font-size:36px;font-weight:800;letter-spacing:12px;text-align:center;padding:24px;border-radius:8px;margin:24px 0'>" + code + "</div><p style='color:#999;font-size:13px'>Enter this code in the app. Expires in 10 minutes.</p></div>"
+    });
+    res.json({ success: true });
+  } catch(err) { res.status(500).json({ success: false }); }
+});
