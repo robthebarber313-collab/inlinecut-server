@@ -49,26 +49,16 @@ app.post("/send-verification", async (req, res) => {
     await resend.emails.send({
       from: "In LineCut <onboarding@resend.dev>",
       to: email,
-      subject: "Your In LineCut Verification Code",
-      html: `
-        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px;">
-          <h1 style="font-size: 32px; letter-spacing: 4px; color: #0a0a0a; margin-bottom: 8px;">IN LINECUT</h1>
-          <p style="color: #666; margin-bottom: 32px;">Barbershop Check-In</p>
-          <h2 style="font-size: 18px; color: #0a0a0a;">Welcome, ${name}!</h2>
-          <p style="color: #555; line-height: 1.6;">Your verification code is:</p>
-          <div style="background: #0a0a0a; color: #fff; font-size: 36px; font-weight: 800; letter-spacing: 12px; text-align: center; padding: 24px; border-radius: 8px; margin: 24px 0;">${code}</div>
-          <p style="color: #999; font-size: 13px;">This code expires in 10 minutes. If you didn't request this, ignore this email.</p>
-          <hr style="border: none; border-top: 1px solid #f0f0f0; margin: 32px 0;" />
-          <p style="color: #ccc; font-size: 12px;">— In LineCut Team</p>
-        </div>
-      `
+      subject: "Verify Your In LineCut Account",
+      html: "<div style='font-family:sans-serif;max-width:480px;margin:0 auto;padding:40px 24px;background:#fff'><h1 style='font-size:32px;letter-spacing:4px;color:#0a0a0a;margin-bottom:4px'>IN LINECUT</h1><p style='color:#888;font-size:12px;letter-spacing:2px;margin-bottom:32px'>BARBERSHOP CHECK-IN</p><h2 style='font-size:18px;color:#0a0a0a'>Welcome, " + name + "!</h2><p style='color:#555;font-size:15px'>Your verification code is:</p><div style='background:#0a0a0a;color:#fff;font-size:36px;font-weight:800;letter-spacing:12px;text-align:center;padding:24px;border-radius:8px;margin:24px 0'>" + code + "</div><p style='color:#999;font-size:13px'>Enter this code in the app to verify your account.</p></div>"
     });
     res.json({ success: true });
-  } catch (err) {
+  } catch(err) {
     console.error(err);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false });
   }
 });
+
 
 app.post("/send-reset", async (req, res) => {
   const { email, code } = req.body;
