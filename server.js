@@ -12,7 +12,7 @@ const AUTH_TOKEN = "edd4c2b5d3df5f0f0e85a07b8baa7130";
 const FROM_NUMBER = "+18777804236";
 const client = twilio(ACCOUNT_SID, AUTH_TOKEN);
 
-const DB_PATH = path.join(__dirname, "users.json");
+const DB_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, "users.json") : path.join(__dirname, "users.json");
 function loadUsers() {
   try { return JSON.parse(fs.readFileSync(DB_PATH, "utf8")); }
   catch { return []; }
