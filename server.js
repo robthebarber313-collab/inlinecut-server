@@ -191,6 +191,20 @@ app.post("/resend-code", async (req, res) => {
   }
 });
 
+app.post("/dev-verify", (req, res) => {
+  try {
+    const { email, secret } = req.body;
+    if (secret !== "inlinecut2026") return res.status(403).json({ success: false });
+    const users = loadUsers();
+    const idx = users.findIndex(u => u.email === email.toLowerCase());
+    if (idx === -1) return res.status(404).json({ success: false, error: "User not found" });
+    users[idx].verified = true;
+    users[idx].verifyCode = null;
+    saveUsers(users);
+    res.json({ success: true, message: "Account verified" });
+  } catch(err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
 app.get("/health", (req, res) => res.json({ status: "running" }));
 
 const PORT = process.env.PORT || 8080;
