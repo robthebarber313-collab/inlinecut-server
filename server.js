@@ -36,7 +36,7 @@ app.post("/send-welcome", async (req, res) => {
     if (!phone) return res.status(400).json({ success: false, error: "Phone is required" });
     
     const digits = phone.replace(/\D/g, "");
-    const to = `+1${digits}`;
+    const to = "+1${digits}";
     
     const welcomeMsg = message || "Welcome to the barbershop!";
     const body = welcomeMsg
@@ -63,7 +63,7 @@ app.post("/send-broadcast", async (req, res) => {
       try {
         const digits = phone.replace(/\D/g, "");
         const result = await client.messages.create({ 
-          body: message, from: FROM_NUMBER, to: `+1${digits}` 
+          body: message, from: FROM_NUMBER, to: "+1" + digits 
         });
         results.push({ phone, success: true, sid: result.sid });
       } catch (err) {
@@ -98,7 +98,7 @@ app.post("/send-verification", async (req, res) => {
       from: "In LineCut <noreply@mail.inlinecut.com>",
       to: email,
       subject: "Your In LineCut Verification Code",
-      html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:40px 24px;"><h1 style="font-size:32px;letter-spacing:4px;color:#0a0a0a;">IN LINECUT</h1><p style="color:#888;font-size:14px;margin-bottom:32px;">Barbershop Check-In</p><p style="font-size:16px;color:#0a0a0a;">Hey ${name},</p><p style="font-size:14px;color:#555;">Your verification code is:</p><div style="background:#0a0a0a;color:#fff;font-size:36px;font-weight:800;letter-spacing:12px;padding:20px;border-radius:8px;text-align:center;margin:24px 0;">${code}</div><p style="font-size:13px;color:#aaa;">This code expires in 10 minutes.</p></div>`
+      html: "<div style='font-family:sans-serif;max-width:480px;margin:0 auto;padding:40px 24px;'><h1 style='font-size:32px;letter-spacing:4px;color:#0a0a0a;'>IN LINECUT</h1><p style='color:#888;font-size:14px;margin-bottom:32px;'>Barbershop Check-In</p><p style='font-size:16px;color:#0a0a0a;'>Hey " + name + ",</p><p style='font-size:14px;color:#555;'>Your verification code is:</p><div style='background:#0a0a0a;color:#fff;font-size:36px;font-weight:800;letter-spacing:12px;padding:20px;border-radius:8px;text-align:center;margin:24px 0;'>" + code + "</div><p style='font-size:13px;color:#aaa;'>This code expires in 10 minutes.</p></div>"
     });
     res.json({ success: true });
   } catch(err) {
@@ -126,7 +126,7 @@ app.post("/signup", async (req, res) => {
         from: "In LineCut <noreply@mail.inlinecut.com>",
         to: email,
         subject: "Your In LineCut Verification Code",
-        html: \`<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:40px 24px;"><h1 style="font-size:32px;letter-spacing:4px;color:#0a0a0a;">IN LINECUT</h1><p style="color:#888;font-size:14px;margin-bottom:32px;">Barbershop Check-In</p><p style="font-size:16px;color:#0a0a0a;">Hey \${name},</p><p style="font-size:14px;color:#555;">Your verification code is:</p><div style="background:#0a0a0a;color:#fff;font-size:36px;font-weight:800;letter-spacing:12px;padding:20px;border-radius:8px;text-align:center;margin:24px 0;">\${code}</div><p style="font-size:13px;color:#aaa;">This code expires in 10 minutes.</p></div>\`
+        html: \"<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:40px 24px;"><h1 style="font-size:32px;letter-spacing:4px;color:#0a0a0a;">IN LINECUT</h1><p style="color:#888;font-size:14px;margin-bottom:32px;">Barbershop Check-In</p><p style="font-size:16px;color:#0a0a0a;">Hey \" + name + ",</p><p style="font-size:14px;color:#555;">Your verification code is:</p><div style="background:#0a0a0a;color:#fff;font-size:36px;font-weight:800;letter-spacing:12px;padding:20px;border-radius:8px;text-align:center;margin:24px 0;">\" + code + "</div><p style="font-size:13px;color:#aaa;">This code expires in 10 minutes.</p></div>\"
       });
     } catch(e) { console.error("Email error:", e.message); }
     res.json({ success: true, message: "Verification email sent" });
@@ -184,7 +184,7 @@ app.post("/resend-code", async (req, res) => {
       from: "In LineCut <noreply@mail.inlinecut.com>",
       to: email,
       subject: "Your In LineCut Verification Code",
-      html: \`<div style="font-family:sans-serif;padding:40px 24px;"><h1>IN LINECUT</h1><p>Your new verification code:</p><div style="background:#0a0a0a;color:#fff;font-size:36px;font-weight:800;letter-spacing:12px;padding:20px;border-radius:8px;text-align:center;margin:24px 0;">\${code}</div></div>\`
+      html: \"<div style="font-family:sans-serif;padding:40px 24px;"><h1>IN LINECUT</h1><p>Your new verification code:</p><div style="background:#0a0a0a;color:#fff;font-size:36px;font-weight:800;letter-spacing:12px;padding:20px;border-radius:8px;text-align:center;margin:24px 0;">\" + code + "</div></div>\"
     });
     res.json({ success: true });
   } catch(err) {
@@ -195,4 +195,4 @@ app.post("/resend-code", async (req, res) => {
 app.get("/health", (req, res) => res.json({ status: "running" }));
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`In LineCut SMS server running on port ${PORT}`));
+app.listen(PORT, () => console.log("In LineCut SMS server running on port ${PORT}"));
