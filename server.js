@@ -1,24 +1,17 @@
 const express = require("express");
-const Database = require("better-sqlite3");
 const bcrypt = require("bcryptjs");
+const fs = require("fs");
 const path = require("path");
 
-// ── Database setup ──
-const db = new Database(path.join(__dirname, "users.db"));
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    phone TEXT,
-    joinDate TEXT NOT NULL,
-    verified INTEGER DEFAULT 0,
-    verifyCode TEXT,
-    resetCode TEXT,
-    resetExpiry INTEGER
-  )
-`);
+// ── JSON file database ──
+const DB_PATH = path.join(__dirname, "users.json");
+function loadUsers() {
+  try { return JSON.parse(fs.readFileSync(DB_PATH, "utf8")); }
+  catch { return []; }
+}
+function saveUsers(users) {
+  fs.writeFileSync(DB_PATH, JSON.stringify(users, null, 2));
+}
 const { Resend } = require("resend");
 const resend = new Resend(process.env.RESEND_API_KEY);
 const cors = require("cors");
@@ -119,12 +112,14 @@ app.post("/signup", async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
     if (!name || !email || !password) return res.status(400).json({ success: false, error: "Missing fields" });
-    const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(email.toLowerCase());
+    const users = loadUsers();
+    const existing = users.find(u => u.email === email.toLowerCase());
     if (existing) return res.status(409).json({ success: false, error: "Email already registered" });
     const hashed = await bcrypt.hash(password, 10);
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const joinDate = new Date().toLocaleDateString();
-    db.prepare("INSERT INTO users (name, email, password, phone, joinDate, verified, verifyCode) VALUES (?, ?, ?, ?, ?, 0, ?)").run(name, email.toLowerCase(), hashed, phone || "", joinDate, code);
+    users.push({ id: Date.now(), name, email: email.toLowerCase(), password: hashed, phone: phone || "", joinDate, verified: false, verifyCode: code });
+    saveUsers(users);
     // Send verification email
     try {
       await resend.emails.send({
@@ -145,10 +140,14 @@ app.post("/signup", async (req, res) => {
 app.post("/verify-account", (req, res) => {
   try {
     const { email, code } = req.body;
-    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email.toLowerCase());
-    if (!user) return res.status(404).json({ success: false, error: "User not found" });
-    if (user.verifyCode !== code) return res.status(400).json({ success: false, error: "Incorrect code" });
-    db.prepare("UPDATE users SET verified = 1, verifyCode = NULL WHERE email = ?").run(email.toLowerCase());
+    const users = loadUsers();
+    const idx = users.findIndex(u => u.email === email.toLowerCase());
+    if (idx === -1) return res.status(404).json({ success: false, error: "User not found" });
+    if (users[idx].verifyCode !== code) return res.status(400).json({ success: false, error: "Incorrect code" });
+    users[idx].verified = true;
+    users[idx].verifyCode = null;
+    saveUsers(users);
+    const user = users[idx];
     res.json({ success: true, user: { name: user.name, email: user.email, phone: user.phone, joinDate: user.joinDate } });
   } catch(err) {
     res.status(500).json({ success: false, error: err.message });
@@ -159,7 +158,8 @@ app.post("/verify-account", (req, res) => {
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email.toLowerCase());
+    const users = loadUsers();
+    const user = users.find(u => u.email === email.toLowerCase());
     if (!user) return res.status(404).json({ success: false, error: "No account found with this email" });
     if (!user.verified) return res.status(403).json({ success: false, error: "Please verify your email first" });
     const match = await bcrypt.compare(password, user.password);
@@ -174,10 +174,12 @@ app.post("/login", async (req, res) => {
 app.post("/resend-code", async (req, res) => {
   try {
     const { email } = req.body;
-    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email.toLowerCase());
-    if (!user) return res.status(404).json({ success: false, error: "User not found" });
+    const users = loadUsers();
+    const idx = users.findIndex(u => u.email === email.toLowerCase());
+    if (idx === -1) return res.status(404).json({ success: false, error: "User not found" });
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    db.prepare("UPDATE users SET verifyCode = ? WHERE email = ?").run(code, email.toLowerCase());
+    users[idx].verifyCode = code;
+    saveUsers(users);
     await resend.emails.send({
       from: "In LineCut <noreply@mail.inlinecut.com>",
       to: email,
