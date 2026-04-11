@@ -9,7 +9,7 @@ const twilio = require("twilio");
 const resend = new Resend(process.env.RESEND_API_KEY);
 const ACCOUNT_SID = "AC093cc8343464fd17f9083ccde3ca2590";
 const AUTH_TOKEN = "edd4c2b5d3df5f0f0e85a07b8baa7130";
-const FROM_NUMBER = "+18777804236";
+const FROM_NUMBER = "+18882942895";
 const client = twilio(ACCOUNT_SID, AUTH_TOKEN);
 
 const DB_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, "users.json") : path.join(__dirname, "users.json");
