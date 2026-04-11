@@ -205,6 +205,54 @@ app.post("/dev-verify", (req, res) => {
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
+app.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const users = loadUsers();
+    const idx = users.findIndex(u => u.email === email.toLowerCase());
+    if (idx === -1) return res.status(404).json({ success: false, error: "No account found with this email" });
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    users[idx].resetCode = code;
+    users[idx].resetExpiry = Date.now() + 10 * 60 * 1000;
+    saveUsers(users);
+    await resend.emails.send({
+      from: "In LineCut <noreply@mail.inlinecut.com>",
+      to: email,
+      subject: "Reset Your In LineCut Password",
+      html: "<div style='font-family:sans-serif;max-width:480px;margin:0 auto;padding:40px 24px'>"
+        + "<h1 style='font-size:32px;letter-spacing:4px;color:#0a0a0a'>IN LINECUT</h1>"
+        + "<p style='font-size:16px;color:#0a0a0a'>Password Reset Request</p>"
+        + "<p style='font-size:14px;color:#555'>Your reset code is:</p>"
+        + "<div style='background:#0a0a0a;color:#fff;font-size:36px;font-weight:800;letter-spacing:12px;padding:20px;border-radius:8px;text-align:center;margin:24px 0'>" + code + "</div>"
+        + "<p style='font-size:13px;color:#aaa'>This code expires in 10 minutes. If you did not request this, ignore this email.</p>"
+        + "</div>"
+    });
+    res.json({ success: true });
+  } catch(err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/reset-password", async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    if (!email || !code || !newPassword) return res.status(400).json({ success: false, error: "Missing fields" });
+    const users = loadUsers();
+    const idx = users.findIndex(u => u.email === email.toLowerCase());
+    if (idx === -1) return res.status(404).json({ success: false, error: "User not found" });
+    if (users[idx].resetCode !== code) return res.status(400).json({ success: false, error: "Incorrect code" });
+    if (Date.now() > users[idx].resetExpiry) return res.status(400).json({ success: false, error: "Code expired" });
+    if (newPassword.length < 4) return res.status(400).json({ success: false, error: "Password must be 4+ characters" });
+    users[idx].password = await bcrypt.hash(newPassword, 10);
+    users[idx].resetCode = null;
+    users[idx].resetExpiry = null;
+    saveUsers(users);
+    res.json({ success: true });
+  } catch(err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.get("/health", (req, res) => res.json({ status: "running" }));
 
 const PORT = process.env.PORT || 8080;
