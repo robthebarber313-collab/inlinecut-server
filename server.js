@@ -253,6 +253,21 @@ app.post("/reset-password", async (req, res) => {
   }
 });
 
+
+app.post("/delete-account", (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, error: "Email required" });
+    const users = loadUsers();
+    const filtered = users.filter(u => u.email !== email.toLowerCase());
+    if (filtered.length === users.length) return res.json({ success: false, error: "User not found" });
+    saveUsers(filtered);
+    res.json({ success: true });
+  } catch(err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.get("/health", (req, res) => res.json({ status: "running" }));
 
 const PORT = process.env.PORT || 8080;
